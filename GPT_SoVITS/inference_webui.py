@@ -1,6 +1,9 @@
 import logging
 import traceback
 
+from w_utils.const import BERT_PATH, CNHUBERT_BASE_PATH, get_device, get_dtype, get_is_half
+from w_utils.get_phones import get_phones_and_bert
+
 
 logging.getLogger("markdown_it").setLevel(logging.ERROR)
 logging.getLogger("urllib3").setLevel(logging.ERROR)
@@ -10,9 +13,15 @@ logging.getLogger("asyncio").setLevel(logging.ERROR)
 logging.getLogger("charset_normalizer").setLevel(logging.ERROR)
 logging.getLogger("torchaudio._extension").setLevel(logging.ERROR)
 logging.getLogger("multipart.multipart").setLevel(logging.ERROR)
-from GPT_SoVITS.w_utils.text_cutter import cut1, cut2, cut3, cut4, cut5, process_text, splits
-import LangSegment, os, re, sys, json
+from GPT_SoVITS.w_utils.text_cutter import cut1, cut2, cut3, cut4, cut5, get_first, merge_short_text_in_array, process_text, splits
+import os
+import sys
+import json
 import torch
+
+device = get_device()
+is_half = get_is_half()
+dtype = get_dtype()
 
 version = os.environ.get("version", "v2")
 pretrained_sovits_name = [
@@ -58,8 +67,7 @@ with open("./weight.json", "r", encoding="utf-8") as file:
 
 # gpt_path = os.environ.get("gpt_path", pretrained_gpt_name)
 # sovits_path = os.environ.get("sovits_path", pretrained_sovits_name)
-cnhubert_base_path = os.environ.get("cnhubert_base_path", "GPT_SoVITS/pretrained_models/chinese-hubert-base")
-bert_path = os.environ.get("bert_path", "GPT_SoVITS/pretrained_models/chinese-roberta-wwm-ext-large")
+bert_path = BERT_PATH
 infer_ttswebui = os.environ.get("infer_ttswebui", 9872)
 infer_ttswebui = int(infer_ttswebui)
 is_share = os.environ.get("is_share", "False")
@@ -68,17 +76,15 @@ if "_CUDA_VISIBLE_DEVICES" in os.environ:
     os.environ["CUDA_VISIBLE_DEVICES"] = os.environ["_CUDA_VISIBLE_DEVICES"]
 is_half = eval(os.environ.get("is_half", "True")) and torch.cuda.is_available()
 import gradio as gr
-from transformers import AutoModelForMaskedLM, AutoTokenizer
 import numpy as np
 import librosa
 from feature_extractor import cnhubert
 
-cnhubert.cnhubert_base_path = cnhubert_base_path
+cnhubert.cnhubert_base_path = CNHUBERT_BASE_PATH
 
 from module.models import SynthesizerTrn
 from AR.models.t2s_lightning_module import Text2SemanticLightningModule
-from text import cleaned_text_to_sequence
-from text.cleaner import clean_text
+
 from time import time as ttime
 from module.mel_processing import spectrogram_torch
 from tools.my_utils import load_audio
@@ -117,29 +123,6 @@ dict_language_v2 = {
     i18n("多语种混合(粤语)"): "auto_yue",  # 多语种启动切分识别语种
 }
 dict_language = dict_language_v1 if version == "v1" else dict_language_v2
-
-tokenizer = AutoTokenizer.from_pretrained(bert_path)
-bert_model = AutoModelForMaskedLM.from_pretrained(bert_path)
-if is_half is True:
-    bert_model = bert_model.half().to(device)
-else:
-    bert_model = bert_model.to(device)
-
-
-def get_bert_feature(text, word2ph):
-    with torch.no_grad():
-        inputs = tokenizer(text, return_tensors="pt")
-        for i in inputs:
-            inputs[i] = inputs[i].to(device)
-        res = bert_model(**inputs, output_hidden_states=True)
-        res = torch.cat(res["hidden_states"][-3:-2], -1)[0].cpu()[1:-1]
-    assert len(word2ph) == len(text)
-    phone_level_feature = []
-    for i in range(len(word2ph)):
-        repeat_feature = res[i].repeat(word2ph[i], 1)
-        phone_level_feature.append(repeat_feature)
-    phone_level_feature = torch.cat(phone_level_feature, dim=0)
-    return phone_level_feature.T
 
 
 class DictToAttrRecursive(dict):
@@ -282,125 +265,6 @@ def get_spepc(hps, filename):
         center=False,
     )
     return spec
-
-
-def clean_text_inf(text, language, version):
-    phones, word2ph, norm_text = clean_text(text, language, version)
-    phones = cleaned_text_to_sequence(phones, version)
-    return phones, word2ph, norm_text
-
-
-dtype = torch.float16 if is_half is True else torch.float32
-
-
-def get_bert_inf(phones, word2ph, norm_text, language):
-    language = language.replace("all_", "")
-    if language == "zh":
-        bert = get_bert_feature(norm_text, word2ph).to(device)  # .to(dtype)
-    else:
-        bert = torch.zeros(
-            (1024, len(phones)),
-            dtype=torch.float16 if is_half is True else torch.float32,
-        ).to(device)
-
-    return bert
-
-
-def get_first(text):
-    pattern = "[" + "".join(re.escape(sep) for sep in splits) + "]"
-    text = re.split(pattern, text)[0].strip()
-    return text
-
-
-from text import chinese
-
-
-def get_phones_and_bert(text, language, version):
-    if language in {"en", "all_zh", "all_ja", "all_ko", "all_yue"}:
-        language = language.replace("all_", "")
-        if language == "en":
-            LangSegment.setfilters(["en"])
-            formattext = " ".join(tmp["text"] for tmp in LangSegment.getTexts(text))
-        else:
-            # 因无法区别中日韩文汉字,以用户输入为准
-            formattext = text
-        while "  " in formattext:
-            formattext = formattext.replace("  ", " ")
-        if language == "zh":
-            if re.search(r"[A-Za-z]", formattext):
-                formattext = re.sub(r"[a-z]", lambda x: x.group(0).upper(), formattext)
-                formattext = chinese.mix_text_normalize(formattext)
-                return get_phones_and_bert(formattext, "zh", version)
-            else:
-                phones, word2ph, norm_text = clean_text_inf(formattext, language, version)
-                bert = get_bert_feature(norm_text, word2ph).to(device)
-        elif language == "yue" and re.search(r"[A-Za-z]", formattext):
-            formattext = re.sub(r"[a-z]", lambda x: x.group(0).upper(), formattext)
-            formattext = chinese.mix_text_normalize(formattext)
-            return get_phones_and_bert(formattext, "yue", version)
-        else:
-            phones, word2ph, norm_text = clean_text_inf(formattext, language, version)
-            bert = torch.zeros(
-                (1024, len(phones)),
-                dtype=torch.float16 if is_half is True else torch.float32,
-            ).to(device)
-    elif language in {"zh", "ja", "ko", "yue", "auto", "auto_yue"}:
-        textlist = []
-        langlist = []
-        LangSegment.setfilters(["zh", "ja", "en", "ko"])
-        if language == "auto":
-            for tmp in LangSegment.getTexts(text):
-                langlist.append(tmp["lang"])
-                textlist.append(tmp["text"])
-        elif language == "auto_yue":
-            for tmp in LangSegment.getTexts(text):
-                if tmp["lang"] == "zh":
-                    tmp["lang"] = "yue"
-                langlist.append(tmp["lang"])
-                textlist.append(tmp["text"])
-        else:
-            for tmp in LangSegment.getTexts(text):
-                if tmp["lang"] == "en":
-                    langlist.append(tmp["lang"])
-                else:
-                    # 因无法区别中日韩文汉字,以用户输入为准
-                    langlist.append(language)
-                textlist.append(tmp["text"])
-        print(textlist)
-        print(langlist)
-        phones_list = []
-        bert_list = []
-        norm_text_list = []
-        for i in range(len(textlist)):
-            lang = langlist[i]
-            phones, word2ph, norm_text = clean_text_inf(textlist[i], lang, version)
-            bert = get_bert_inf(phones, word2ph, norm_text, lang)
-            phones_list.append(phones)
-            norm_text_list.append(norm_text)
-            bert_list.append(bert)
-        bert = torch.cat(bert_list, dim=1)
-        phones = sum(phones_list, [])
-        norm_text = "".join(norm_text_list)
-
-    return phones, bert.to(dtype), norm_text
-
-
-def merge_short_text_in_array(texts, threshold):
-    if (len(texts)) < 2:
-        return texts
-    result = []
-    text = ""
-    for ele in texts:
-        text += ele
-        if len(text) >= threshold:
-            result.append(text)
-            text = ""
-    if len(text) > 0:
-        if len(result) == 0:
-            result.append(text)
-        else:
-            result[len(result) - 1] += text
-    return result
 
 
 # #ref_wav_path+prompt_text+prompt_language+text(单个)+text_language+top_k+top_p+temperature
