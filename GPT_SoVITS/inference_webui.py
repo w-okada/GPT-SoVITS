@@ -10,7 +10,7 @@ logging.getLogger("asyncio").setLevel(logging.ERROR)
 logging.getLogger("charset_normalizer").setLevel(logging.ERROR)
 logging.getLogger("torchaudio._extension").setLevel(logging.ERROR)
 logging.getLogger("multipart.multipart").setLevel(logging.ERROR)
-from GPT_SoVITS.w_utils.text_cutter import cut1, cut2, cut3, cut4, cut5, splits
+from GPT_SoVITS.w_utils.text_cutter import cut1, cut2, cut3, cut4, cut5, process_text, splits
 import LangSegment, os, re, sys, json
 import torch
 
@@ -567,26 +567,6 @@ def get_tts_wav(
         t1 = ttime()
     print("%.3f\t%.3f\t%.3f\t%.3f" % (t[0], sum(t[1::3]), sum(t[2::3]), sum(t[3::3])))
     yield hps.data.sampling_rate, (np.concatenate(audio_opt, 0) * 32768).astype(np.int16)
-
-
-def custom_sort_key(s):
-    # 使用正则表达式提取字符串中的数字部分和非数字部分
-    parts = re.split("(\d+)", s)
-    # 将数字部分转换为整数，非数字部分保持不变
-    parts = [int(part) if part.isdigit() else part for part in parts]
-    return parts
-
-
-def process_text(texts):
-    _text = []
-    if all(text in [None, " ", "\n", ""] for text in texts):
-        raise ValueError(i18n("请输入有效文本"))
-    for text in texts:
-        if text in [None, " ", ""]:
-            pass
-        else:
-            _text.append(text)
-    return _text
 
 
 if __name__ == "__main__":

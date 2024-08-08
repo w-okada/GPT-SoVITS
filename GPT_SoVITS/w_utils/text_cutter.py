@@ -2,6 +2,18 @@ splits = {"，", "。", "？", "！", ",", ".", "?", "!", "~", ":", "：", "—"
 punctuation = set(["!", "?", "…", ",", ".", "-", " "])
 
 
+def process_text(texts):
+    _text = []
+    if all(text in [None, " ", "\n", ""] for text in texts):
+        raise ValueError("invalid input text")
+    for text in texts:
+        if text in [None, " ", ""]:
+            pass
+        else:
+            _text.append(text)
+    return _text
+
+
 def split(todo_text):
     todo_text = todo_text.replace("……", "。").replace("——", "，")
     if todo_text[-1] not in splits:
