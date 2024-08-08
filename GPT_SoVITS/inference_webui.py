@@ -363,11 +363,11 @@ if __name__ == "__main__":
     with open("GPT_SoVITS/test_data/ref_text.txt") as f:
         ref_text = f.read()
     print(ref_text)
-    ref_language = "日文"
+    ref_language = i18n("日文")
     with open("GPT_SoVITS/test_data/target_text.txt") as f:
         target_text = f.read()
     print(target_text)
-    target_language = "日文"
+    target_language = i18n("日文")
     output_wav_path = "./output.wav"
     change_gpt_weights(gpt_path=gpt_model)
     change_sovits_weights(sovits_path=sovits_model)
