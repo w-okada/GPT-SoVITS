@@ -3,6 +3,7 @@ import traceback
 
 from w_utils.const import BERT_PATH, CNHUBERT_BASE_PATH, get_device, get_dtype, get_is_half
 from w_utils.get_phones import get_phones_and_bert
+from w_utils.get_spec import get_spepc
 
 
 logging.getLogger("markdown_it").setLevel(logging.ERROR)
@@ -86,8 +87,7 @@ from module.models import SynthesizerTrn
 from AR.models.t2s_lightning_module import Text2SemanticLightningModule
 
 from time import time as ttime
-from module.mel_processing import spectrogram_torch
-from tools.my_utils import load_audio
+
 from tools.i18n.i18n import I18nAuto, scan_language_list
 
 language = os.environ.get("language", "Auto")
@@ -246,25 +246,6 @@ def change_gpt_weights(gpt_path):
 
 
 change_gpt_weights(gpt_path)
-
-
-def get_spepc(hps, filename):
-    audio = load_audio(filename, int(hps.data.sampling_rate))
-    audio = torch.FloatTensor(audio)
-    maxx = audio.abs().max()
-    if maxx > 1:
-        audio /= min(2, maxx)
-    audio_norm = audio
-    audio_norm = audio_norm.unsqueeze(0)
-    spec = spectrogram_torch(
-        audio_norm,
-        hps.data.filter_length,
-        hps.data.sampling_rate,
-        hps.data.hop_length,
-        hps.data.win_length,
-        center=False,
-    )
-    return spec
 
 
 # #ref_wav_path+prompt_text+prompt_language+text(单个)+text_language+top_k+top_p+temperature
