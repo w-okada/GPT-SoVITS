@@ -1,7 +1,7 @@
 import logging
 import traceback
 
-from w_utils.const import BERT_PATH, CNHUBERT_BASE_PATH, get_device, get_dtype, get_is_half
+from w_utils.const import CNHUBERT_BASE_PATH, get_device, get_dtype, get_is_half
 from w_utils.get_phones import get_phones_and_bert
 from w_utils.get_spec import get_spepc
 
@@ -25,57 +25,8 @@ is_half = get_is_half()
 dtype = get_dtype()
 
 version = os.environ.get("version", "v2")
-pretrained_sovits_name = [
-    "GPT_SoVITS/pretrained_models/gsv-v2final-pretrained/s2G2333k.pth",
-    "GPT_SoVITS/pretrained_models/s2G488k.pth",
-]
-pretrained_gpt_name = [
-    "GPT_SoVITS/pretrained_models/gsv-v2final-pretrained/s1bert25hz-5kh-longer-epoch=12-step=369668.ckpt",
-    "GPT_SoVITS/pretrained_models/s1bert25hz-2kh-longer-epoch=68e-step=50232.ckpt",
-]
-
-_ = [[], []]
-for i in range(2):
-    if os.path.exists(pretrained_gpt_name[i]):
-        _[0].append(pretrained_gpt_name[i])
-    if os.path.exists(pretrained_sovits_name[i]):
-        _[-1].append(pretrained_sovits_name[i])
-pretrained_gpt_name, pretrained_sovits_name = _
 
 
-if os.path.exists("./weight.json"):
-    pass
-else:
-    with open("./weight.json", "w", encoding="utf-8") as file:
-        json.dump({"GPT": {}, "SoVITS": {}}, file)
-
-with open("./weight.json", "r", encoding="utf-8") as file:
-    weight_data = file.read()
-    weight_data = json.loads(weight_data)
-    print("gpt_path1", os.environ.get("gpt_path"))
-    print("gpt_path2", weight_data.get("GPT", {}))
-
-    gpt_path = os.environ.get("gpt_path", weight_data.get("GPT", {}).get(version, pretrained_gpt_name))
-    sovits_path = os.environ.get(
-        "sovits_path",
-        weight_data.get("SoVITS", {}).get(version, pretrained_sovits_name),
-    )
-    print("-----------", gpt_path)
-    if isinstance(gpt_path, list):
-        gpt_path = gpt_path[0]
-    if isinstance(sovits_path, list):
-        sovits_path = sovits_path[0]
-
-# gpt_path = os.environ.get("gpt_path", pretrained_gpt_name)
-# sovits_path = os.environ.get("sovits_path", pretrained_sovits_name)
-bert_path = BERT_PATH
-infer_ttswebui = os.environ.get("infer_ttswebui", 9872)
-infer_ttswebui = int(infer_ttswebui)
-is_share = os.environ.get("is_share", "False")
-is_share = eval(is_share)
-if "_CUDA_VISIBLE_DEVICES" in os.environ:
-    os.environ["CUDA_VISIBLE_DEVICES"] = os.environ["_CUDA_VISIBLE_DEVICES"]
-is_half = eval(os.environ.get("is_half", "True")) and torch.cuda.is_available()
 import gradio as gr
 import numpy as np
 import librosa
@@ -94,12 +45,6 @@ language = os.environ.get("language", "Auto")
 language = sys.argv[-1] if sys.argv[-1] in scan_language_list() else language
 i18n = I18nAuto(language=language)
 
-# os.environ['PYTORCH_ENABLE_MPS_FALLBACK'] = '1'  # 确保直接启动推理UI时也能够设置。
-
-if torch.cuda.is_available():
-    device = "cuda"
-else:
-    device = "cpu"
 
 dict_language_v1 = {
     i18n("中文"): "all_zh",  # 全部按中文识别
@@ -220,9 +165,6 @@ def change_sovits_weights(sovits_path, prompt_language=None, text_language=None)
         )
 
 
-change_sovits_weights(sovits_path)
-
-
 def change_gpt_weights(gpt_path):
     global hz, max_sec, t2s_model, config
     hz = 50
@@ -243,9 +185,6 @@ def change_gpt_weights(gpt_path):
         data["GPT"][version] = gpt_path
     with open("./weight.json", "w") as f:
         f.write(json.dumps(data))
-
-
-change_gpt_weights(gpt_path)
 
 
 # #ref_wav_path+prompt_text+prompt_language+text(单个)+text_language+top_k+top_p+temperature
