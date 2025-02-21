@@ -896,11 +896,49 @@ with gr.Blocks(title="GPT-SoVITS WebUI") as app:
         #     button5.click(cut5, [text_inp], [text_opt])
         # gr.Markdown(html_center(i18n("后续将支持转音素、手工修改音素、语音合成分步执行。")))
 
-if __name__ == '__main__':
-    app.queue().launch(#concurrency_count=511, max_size=1022
-        server_name="0.0.0.0",
-        inbrowser=True,
-        share=is_share,
-        server_port=infer_ttswebui,
-        quiet=True,
+# if __name__ == '__main__':
+#     app.queue().launch(#concurrency_count=511, max_size=1022
+#         server_name="0.0.0.0",
+#         inbrowser=True,
+#         share=is_share,
+#         server_port=infer_ttswebui,
+#         quiet=True,
+#     )
+
+if __name__ == "__main__":
+    import time
+    import soundfile as sf
+
+    gpt_model = "./GPT_SoVITS/pretrained_models/gsv-v2final-pretrained/s1bert25hz-5kh-longer-epoch=12-step=369668.ckpt"
+    sovits_model = "./GPT_SoVITS/pretrained_models/gsv-v2final-pretrained/s2G2333k.pth"
+    ref_audio_path = "GPT_SoVITS/test_data/ref_audio.wav"
+    with open("GPT_SoVITS/test_data/ref_text.txt", encoding="utf8") as f:
+        ref_text = f.read()
+    print(ref_text)
+    ref_language = i18n("日文")
+    with open("GPT_SoVITS/test_data/target_text.txt", encoding="utf8") as f:
+        target_text = f.read()
+    print(target_text)
+    target_language = i18n("日文")
+    output_wav_path = "./output.wav"
+    change_gpt_weights(gpt_path=gpt_model)
+    change_sovits_weights(sovits_path=sovits_model)
+    start = time.time()
+    synthesis_result = get_tts_wav(
+        ref_wav_path=ref_audio_path,
+        prompt_text=ref_text,
+        prompt_language=i18n(ref_language),
+        text=target_text,
+        text_language=i18n(target_language),
+        top_p=1,
+        temperature=1,
+        inp_refs=False,
     )
+
+    result_list = list(synthesis_result)
+    print(f"Time taken: {time.time() - start}")
+
+    if result_list:
+        last_sampling_rate, last_audio_data = result_list[-1]
+        sf.write(output_wav_path, last_audio_data, last_sampling_rate)
+        print(f"Audio saved to {output_wav_path}")
