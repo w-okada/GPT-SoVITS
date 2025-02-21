@@ -31,42 +31,43 @@ except:...
 version=model_version=os.environ.get("version","v3")
 # pretrained_sovits_name=["GPT_SoVITS/pretrained_models/s2G488k.pth", "GPT_SoVITS/pretrained_models/gsv-v2final-pretrained/s2G2333k.pth","GPT_SoVITS/pretrained_models/s2Gv3.pth"] # org
 # pretrained_sovits_name=[ "GPT_SoVITS/pretrained_models/gsv-v2final-pretrained/s2G2333k.pth"] # For V2
-pretrained_sovits_name=[ "GPT_SoVITS/pretrained_models/s2Gv3.pth"] # For V3
+# pretrained_sovits_name=[ "GPT_SoVITS/pretrained_models/s2Gv3.pth"] # For V3
+pretrained_sovits_name=[ ]  # __main__で設定
 # pretrained_gpt_name=["GPT_SoVITS/pretrained_models/s1bert25hz-2kh-longer-epoch=68e-step=50232.ckpt","GPT_SoVITS/pretrained_models/gsv-v2final-pretrained/s1bert25hz-5kh-longer-epoch=12-step=369668.ckpt", "GPT_SoVITS/pretrained_models/s1v3.ckpt"] # org
 # pretrained_gpt_name=["GPT_SoVITS/pretrained_models/gsv-v2final-pretrained/s1bert25hz-5kh-longer-epoch=12-step=369668.ckpt"] # For V2
-pretrained_gpt_name=["GPT_SoVITS/pretrained_models/s1v3.ckpt"] # For V3
+# pretrained_gpt_name=["GPT_SoVITS/pretrained_models/s1v3.ckpt"] # For V3
+pretrained_gpt_name=[] # __main__で設定
+
+# モデルは__main__で設定
+# _ =[[],[]]
+# for i in range(len(pretrained_sovits_name)):
+#     if os.path.exists(pretrained_gpt_name[i]):_[0].append(pretrained_gpt_name[i])
+#     if os.path.exists(pretrained_sovits_name[i]):_[-1].append(pretrained_sovits_name[i])
+
+# print("___",_)
+# pretrained_gpt_name,pretrained_sovits_name = _
+# print("pretrained_gpt_name,pretrained_sovits_name ", pretrained_gpt_name,pretrained_sovits_name )
 
 
+# if os.path.exists(f"./weight.json"):
+#     pass
+# else:
+#     with open(f"./weight.json", 'w', encoding="utf-8") as file:json.dump({'GPT':{},'SoVITS':{}},file)
 
-_ =[[],[]]
-for i in range(len(pretrained_sovits_name)):
-    if os.path.exists(pretrained_gpt_name[i]):_[0].append(pretrained_gpt_name[i])
-    if os.path.exists(pretrained_sovits_name[i]):_[-1].append(pretrained_sovits_name[i])
-
-print("___",_)
-pretrained_gpt_name,pretrained_sovits_name = _
-print("pretrained_gpt_name,pretrained_sovits_name ", pretrained_gpt_name,pretrained_sovits_name )
-
-
-if os.path.exists(f"./weight.json"):
-    pass
-else:
-    with open(f"./weight.json", 'w', encoding="utf-8") as file:json.dump({'GPT':{},'SoVITS':{}},file)
-
-with open(f"./weight.json", 'r', encoding="utf-8") as file:
-    weight_data = file.read()
-    weight_data=json.loads(weight_data)
-    print("gpt_path/////",pretrained_gpt_name)
-    print("gpt_path/////version----------------- ",version)
-    gpt_path = os.environ.get(
-        "gpt_path", weight_data.get('GPT',{}).get(version,pretrained_gpt_name))
-    print("gpt_path___",gpt_path)
-    sovits_path = os.environ.get(
-        "sovits_path", weight_data.get('SoVITS',{}).get(version,pretrained_sovits_name))
-    if isinstance(gpt_path,list):
-        gpt_path = gpt_path[0]
-    if isinstance(sovits_path,list):
-        sovits_path = sovits_path[0]
+# with open(f"./weight.json", 'r', encoding="utf-8") as file:
+#     weight_data = file.read()
+#     weight_data=json.loads(weight_data)
+#     print("gpt_path/////",pretrained_gpt_name)
+#     print("gpt_path/////version----------------- ",version)
+#     gpt_path = os.environ.get(
+#         "gpt_path", weight_data.get('GPT',{}).get(version,pretrained_gpt_name))
+#     print("gpt_path___",gpt_path)
+#     sovits_path = os.environ.get(
+#         "sovits_path", weight_data.get('SoVITS',{}).get(version,pretrained_sovits_name))
+#     if isinstance(gpt_path,list):
+#         gpt_path = gpt_path[0]
+#     if isinstance(sovits_path,list):
+#         sovits_path = sovits_path[0]
 
 # gpt_path = os.environ.get(
 #     "gpt_path", pretrained_gpt_name
@@ -205,6 +206,7 @@ def resample(audio_tensor, sr0):
     return resample_transform_dict[sr0](audio_tensor)
 
 def change_sovits_weights(sovits_path,prompt_language=None,text_language=None):
+    print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA1")
     global vq_model, hps, version, model_version, dict_language
     '''
         v1:about 82942KB
@@ -223,6 +225,7 @@ def change_sovits_weights(sovits_path,prompt_language=None,text_language=None):
         model_version:
             sovits is v1/2 (VITS) or v3 (shortcut CFM DiT)
     '''
+    print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA2")
     size=os.path.getsize(sovits_path)
     if size<82978*1024:
         model_version=version="v1"
@@ -301,8 +304,9 @@ def change_sovits_weights(sovits_path,prompt_language=None,text_language=None):
     with open("./weight.json","w")as f:f.write(json.dumps(data))
 
 
-try:next(change_sovits_weights(sovits_path))
-except:pass
+
+# try:next(change_sovits_weights(sovits_path))
+# except:pass
 
 def change_gpt_weights(gpt_path):
     global hz, max_sec, t2s_model, config
@@ -325,7 +329,8 @@ def change_gpt_weights(gpt_path):
     with open("./weight.json","w")as f:f.write(json.dumps(data))
 
 
-change_gpt_weights(gpt_path)
+# change_gpt_weights(gpt_path)
+
 os.environ["HF_ENDPOINT"]          = "https://hf-mirror.com"
 import torch,soundfile
 now_dir = os.getcwd()
@@ -833,83 +838,83 @@ def html_left(text, label='p'):
                 <{label} style="margin: 0; padding: 0;">{text}</{label}>
                 </div>"""
 
+# WebUIは使用しない。CLIに限定
+# with gr.Blocks(title="GPT-SoVITS WebUI") as app:
+#     gr.Markdown(
+#         value=i18n("本软件以MIT协议开源, 作者不对软件具备任何控制力, 使用软件者、传播软件导出的声音者自负全责. <br>如不认可该条款, 则不能使用或引用软件包内任何代码和文件. 详见根目录<b>LICENSE</b>.")
+#     )
+#     with gr.Group():
+#         gr.Markdown(html_center(i18n("模型切换"),'h3'))
+#         with gr.Row():
+#             GPT_dropdown = gr.Dropdown(label=i18n("GPT模型列表"), choices=sorted(GPT_names, key=custom_sort_key), value=gpt_path, interactive=True, scale=14)
+#             SoVITS_dropdown = gr.Dropdown(label=i18n("SoVITS模型列表"), choices=sorted(SoVITS_names, key=custom_sort_key), value=sovits_path, interactive=True, scale=14)
+#             refresh_button = gr.Button(i18n("刷新模型路径"), variant="primary", scale=14)
+#             refresh_button.click(fn=change_choices, inputs=[], outputs=[SoVITS_dropdown, GPT_dropdown])
+#         gr.Markdown(html_center(i18n("*请上传并填写参考信息"),'h3'))
+#         with gr.Row():
+#             inp_ref = gr.Audio(label=i18n("请上传3~10秒内参考音频，超过会报错！"), type="filepath", scale=13)
+#             with gr.Column(scale=13):
+#                 ref_text_free = gr.Checkbox(label=i18n("开启无参考文本模式。不填参考文本亦相当于开启。v3暂不支持该模式，使用了会报错。"), value=False, interactive=True, show_label=True,scale=1)
+#                 gr.Markdown(html_left(i18n("使用无参考文本模式时建议使用微调的GPT，听不清参考音频说的啥(不晓得写啥)可以开。<br>开启后无视填写的参考文本。")))
+#                 prompt_text = gr.Textbox(label=i18n("参考音频的文本"), value="", lines=5, max_lines=5,scale=1)
+#             with gr.Column(scale=14):
+#                 prompt_language = gr.Dropdown(
+#                     label=i18n("参考音频的语种"), choices=list(dict_language.keys()), value=i18n("中文"),
+#                 )
+#                 inp_refs = gr.File(label=i18n("可选项：通过拖拽多个文件上传多个参考音频（建议同性），平均融合他们的音色。如不填写此项，音色由左侧单个参考音频控制。如是微调模型，建议参考音频全部在微调训练集音色内，底模不用管。"),file_count="multiple")if model_version!="v3"else gr.File(label=i18n("可选项：通过拖拽多个文件上传多个参考音频（建议同性），平均融合他们的音色。如不填写此项，音色由左侧单个参考音频控制。如是微调模型，建议参考音频全部在微调训练集音色内，底模不用管。"),file_count="multiple",visible=False)
+#                 sample_steps = gr.Radio(label=i18n("采样步数,如果觉得电,提高试试,如果觉得慢,降低试试"),value=32,choices=[4,8,16,32],visible=True)if model_version=="v3"else gr.Radio(label=i18n("采样步数,如果觉得电,提高试试,如果觉得慢,降低试试"),value=8,choices=[4,8,16,32],visible=False)
+#         gr.Markdown(html_center(i18n("*请填写需要合成的目标文本和语种模式"),'h3'))
+#         with gr.Row():
+#             with gr.Column(scale=13):
+#                 text = gr.Textbox(label=i18n("需要合成的文本"), value="", lines=26, max_lines=26)
+#             with gr.Column(scale=7):
+#                 text_language = gr.Dropdown(
+#                         label=i18n("需要合成的语种")+i18n(".限制范围越小判别效果越好。"), choices=list(dict_language.keys()), value=i18n("中文"), scale=1
+#                     )
+#                 how_to_cut = gr.Dropdown(
+#                         label=i18n("怎么切"),
+#                         choices=[i18n("不切"), i18n("凑四句一切"), i18n("凑50字一切"), i18n("按中文句号。切"), i18n("按英文句号.切"), i18n("按标点符号切"), ],
+#                         value=i18n("凑四句一切"),
+#                         interactive=True, scale=1
+#                     )
+#                 gr.Markdown(value=html_center(i18n("语速调整，高为更快")))
+#                 if_freeze=gr.Checkbox(label=i18n("是否直接对上次合成结果调整语速和音色。防止随机性。"), value=False, interactive=True,show_label=True, scale=1)
+#                 speed = gr.Slider(minimum=0.6,maximum=1.65,step=0.05,label=i18n("语速"),value=1,interactive=True, scale=1)
+#                 gr.Markdown(html_center(i18n("GPT采样参数(无参考文本时不要太低。不懂就用默认)：")))
+#                 top_k = gr.Slider(minimum=1,maximum=100,step=1,label=i18n("top_k"),value=15,interactive=True, scale=1)
+#                 top_p = gr.Slider(minimum=0,maximum=1,step=0.05,label=i18n("top_p"),value=1,interactive=True, scale=1)
+#                 temperature = gr.Slider(minimum=0,maximum=1,step=0.05,label=i18n("temperature"),value=1,interactive=True,  scale=1) 
+#             # with gr.Column():
+#             #     gr.Markdown(value=i18n("手工调整音素。当音素框不为空时使用手工音素输入推理，无视目标文本框。"))
+#             #     phoneme=gr.Textbox(label=i18n("音素框"), value="")
+#             #     get_phoneme_button = gr.Button(i18n("目标文本转音素"), variant="primary")
+#         with gr.Row():
+#             inference_button = gr.Button(i18n("合成语音"), variant="primary", size='lg', scale=25)
+#             output = gr.Audio(label=i18n("输出的语音"), scale=14)
 
-with gr.Blocks(title="GPT-SoVITS WebUI") as app:
-    gr.Markdown(
-        value=i18n("本软件以MIT协议开源, 作者不对软件具备任何控制力, 使用软件者、传播软件导出的声音者自负全责. <br>如不认可该条款, 则不能使用或引用软件包内任何代码和文件. 详见根目录<b>LICENSE</b>.")
-    )
-    with gr.Group():
-        gr.Markdown(html_center(i18n("模型切换"),'h3'))
-        with gr.Row():
-            GPT_dropdown = gr.Dropdown(label=i18n("GPT模型列表"), choices=sorted(GPT_names, key=custom_sort_key), value=gpt_path, interactive=True, scale=14)
-            SoVITS_dropdown = gr.Dropdown(label=i18n("SoVITS模型列表"), choices=sorted(SoVITS_names, key=custom_sort_key), value=sovits_path, interactive=True, scale=14)
-            refresh_button = gr.Button(i18n("刷新模型路径"), variant="primary", scale=14)
-            refresh_button.click(fn=change_choices, inputs=[], outputs=[SoVITS_dropdown, GPT_dropdown])
-        gr.Markdown(html_center(i18n("*请上传并填写参考信息"),'h3'))
-        with gr.Row():
-            inp_ref = gr.Audio(label=i18n("请上传3~10秒内参考音频，超过会报错！"), type="filepath", scale=13)
-            with gr.Column(scale=13):
-                ref_text_free = gr.Checkbox(label=i18n("开启无参考文本模式。不填参考文本亦相当于开启。v3暂不支持该模式，使用了会报错。"), value=False, interactive=True, show_label=True,scale=1)
-                gr.Markdown(html_left(i18n("使用无参考文本模式时建议使用微调的GPT，听不清参考音频说的啥(不晓得写啥)可以开。<br>开启后无视填写的参考文本。")))
-                prompt_text = gr.Textbox(label=i18n("参考音频的文本"), value="", lines=5, max_lines=5,scale=1)
-            with gr.Column(scale=14):
-                prompt_language = gr.Dropdown(
-                    label=i18n("参考音频的语种"), choices=list(dict_language.keys()), value=i18n("中文"),
-                )
-                inp_refs = gr.File(label=i18n("可选项：通过拖拽多个文件上传多个参考音频（建议同性），平均融合他们的音色。如不填写此项，音色由左侧单个参考音频控制。如是微调模型，建议参考音频全部在微调训练集音色内，底模不用管。"),file_count="multiple")if model_version!="v3"else gr.File(label=i18n("可选项：通过拖拽多个文件上传多个参考音频（建议同性），平均融合他们的音色。如不填写此项，音色由左侧单个参考音频控制。如是微调模型，建议参考音频全部在微调训练集音色内，底模不用管。"),file_count="multiple",visible=False)
-                sample_steps = gr.Radio(label=i18n("采样步数,如果觉得电,提高试试,如果觉得慢,降低试试"),value=32,choices=[4,8,16,32],visible=True)if model_version=="v3"else gr.Radio(label=i18n("采样步数,如果觉得电,提高试试,如果觉得慢,降低试试"),value=8,choices=[4,8,16,32],visible=False)
-        gr.Markdown(html_center(i18n("*请填写需要合成的目标文本和语种模式"),'h3'))
-        with gr.Row():
-            with gr.Column(scale=13):
-                text = gr.Textbox(label=i18n("需要合成的文本"), value="", lines=26, max_lines=26)
-            with gr.Column(scale=7):
-                text_language = gr.Dropdown(
-                        label=i18n("需要合成的语种")+i18n(".限制范围越小判别效果越好。"), choices=list(dict_language.keys()), value=i18n("中文"), scale=1
-                    )
-                how_to_cut = gr.Dropdown(
-                        label=i18n("怎么切"),
-                        choices=[i18n("不切"), i18n("凑四句一切"), i18n("凑50字一切"), i18n("按中文句号。切"), i18n("按英文句号.切"), i18n("按标点符号切"), ],
-                        value=i18n("凑四句一切"),
-                        interactive=True, scale=1
-                    )
-                gr.Markdown(value=html_center(i18n("语速调整，高为更快")))
-                if_freeze=gr.Checkbox(label=i18n("是否直接对上次合成结果调整语速和音色。防止随机性。"), value=False, interactive=True,show_label=True, scale=1)
-                speed = gr.Slider(minimum=0.6,maximum=1.65,step=0.05,label=i18n("语速"),value=1,interactive=True, scale=1)
-                gr.Markdown(html_center(i18n("GPT采样参数(无参考文本时不要太低。不懂就用默认)：")))
-                top_k = gr.Slider(minimum=1,maximum=100,step=1,label=i18n("top_k"),value=15,interactive=True, scale=1)
-                top_p = gr.Slider(minimum=0,maximum=1,step=0.05,label=i18n("top_p"),value=1,interactive=True, scale=1)
-                temperature = gr.Slider(minimum=0,maximum=1,step=0.05,label=i18n("temperature"),value=1,interactive=True,  scale=1) 
-            # with gr.Column():
-            #     gr.Markdown(value=i18n("手工调整音素。当音素框不为空时使用手工音素输入推理，无视目标文本框。"))
-            #     phoneme=gr.Textbox(label=i18n("音素框"), value="")
-            #     get_phoneme_button = gr.Button(i18n("目标文本转音素"), variant="primary")
-        with gr.Row():
-            inference_button = gr.Button(i18n("合成语音"), variant="primary", size='lg', scale=25)
-            output = gr.Audio(label=i18n("输出的语音"), scale=14)
+#         inference_button.click(
+#             get_tts_wav,
+#             [inp_ref, prompt_text, prompt_language, text, text_language, how_to_cut, top_k, top_p, temperature, ref_text_free,speed,if_freeze,inp_refs,sample_steps],
+#             [output],
+#         )
+#         SoVITS_dropdown.change(change_sovits_weights, [SoVITS_dropdown,prompt_language,text_language], [prompt_language,text_language,prompt_text,prompt_language,text,text_language,sample_steps,inp_refs,ref_text_free])
+#         GPT_dropdown.change(change_gpt_weights, [GPT_dropdown], [])
 
-        inference_button.click(
-            get_tts_wav,
-            [inp_ref, prompt_text, prompt_language, text, text_language, how_to_cut, top_k, top_p, temperature, ref_text_free,speed,if_freeze,inp_refs,sample_steps],
-            [output],
-        )
-        SoVITS_dropdown.change(change_sovits_weights, [SoVITS_dropdown,prompt_language,text_language], [prompt_language,text_language,prompt_text,prompt_language,text,text_language,sample_steps,inp_refs,ref_text_free])
-        GPT_dropdown.change(change_gpt_weights, [GPT_dropdown], [])
-
-        # gr.Markdown(value=i18n("文本切分工具。太长的文本合成出来效果不一定好，所以太长建议先切。合成会根据文本的换行分开合成再拼起来。"))
-        # with gr.Row():
-        #     text_inp = gr.Textbox(label=i18n("需要合成的切分前文本"), value="")
-        #     button1 = gr.Button(i18n("凑四句一切"), variant="primary")
-        #     button2 = gr.Button(i18n("凑50字一切"), variant="primary")
-        #     button3 = gr.Button(i18n("按中文句号。切"), variant="primary")
-        #     button4 = gr.Button(i18n("按英文句号.切"), variant="primary")
-        #     button5 = gr.Button(i18n("按标点符号切"), variant="primary")
-        #     text_opt = gr.Textbox(label=i18n("切分后文本"), value="")
-        #     button1.click(cut1, [text_inp], [text_opt])
-        #     button2.click(cut2, [text_inp], [text_opt])
-        #     button3.click(cut3, [text_inp], [text_opt])
-        #     button4.click(cut4, [text_inp], [text_opt])
-        #     button5.click(cut5, [text_inp], [text_opt])
-        # gr.Markdown(html_center(i18n("后续将支持转音素、手工修改音素、语音合成分步执行。")))
+#         # gr.Markdown(value=i18n("文本切分工具。太长的文本合成出来效果不一定好，所以太长建议先切。合成会根据文本的换行分开合成再拼起来。"))
+#         # with gr.Row():
+#         #     text_inp = gr.Textbox(label=i18n("需要合成的切分前文本"), value="")
+#         #     button1 = gr.Button(i18n("凑四句一切"), variant="primary")
+#         #     button2 = gr.Button(i18n("凑50字一切"), variant="primary")
+#         #     button3 = gr.Button(i18n("按中文句号。切"), variant="primary")
+#         #     button4 = gr.Button(i18n("按英文句号.切"), variant="primary")
+#         #     button5 = gr.Button(i18n("按标点符号切"), variant="primary")
+#         #     text_opt = gr.Textbox(label=i18n("切分后文本"), value="")
+#         #     button1.click(cut1, [text_inp], [text_opt])
+#         #     button2.click(cut2, [text_inp], [text_opt])
+#         #     button3.click(cut3, [text_inp], [text_opt])
+#         #     button4.click(cut4, [text_inp], [text_opt])
+#         #     button5.click(cut5, [text_inp], [text_opt])
+#         # gr.Markdown(html_center(i18n("后续将支持转音素、手工修改音素、语音合成分步执行。")))
 
 # if __name__ == '__main__':
 #     app.queue().launch(#concurrency_count=511, max_size=1022
@@ -924,20 +929,24 @@ if __name__ == "__main__":
     import time
     import soundfile as sf
 
-    gpt_model = "./GPT_SoVITS/pretrained_models/gsv-v2final-pretrained/s1bert25hz-5kh-longer-epoch=12-step=369668.ckpt"
-    sovits_model = "./GPT_SoVITS/pretrained_models/gsv-v2final-pretrained/s2G2333k.pth"
+    # gpt_model = "./GPT_SoVITS/pretrained_models/gsv-v2final-pretrained/s1bert25hz-5kh-longer-epoch=12-step=369668.ckpt"　# for V2
+    gpt_model = "./GPT_SoVITS/pretrained_models/s1v3.ckpt" # for v3
+    # sovits_model = "./GPT_SoVITS/pretrained_models/gsv-v2final-pretrained/s2G2333k.pth" # for V2
+    sovits_model = "./GPT_SoVITS/pretrained_models/s2Gv3.pth" # for v3
+
     ref_audio_path = "GPT_SoVITS/test_data/ref_audio.wav"
     with open("GPT_SoVITS/test_data/ref_text.txt", encoding="utf8") as f:
         ref_text = f.read()
-    print(ref_text)
+    print("REF_TEXT:", ref_text)
     ref_language = i18n("日文")
     with open("GPT_SoVITS/test_data/target_text.txt", encoding="utf8") as f:
         target_text = f.read()
-    print(target_text)
+    print("PROMPT:", target_text)
     target_language = i18n("日文")
     output_wav_path = "./output.wav"
     change_gpt_weights(gpt_path=gpt_model)
-    change_sovits_weights(sovits_path=sovits_model)
+    try:next(change_sovits_weights(sovits_model))
+    except:pass
     start = time.time()
     synthesis_result = get_tts_wav(
         ref_wav_path=ref_audio_path,
