@@ -27,16 +27,25 @@ try:
     import gradio.analytics as analytics
     analytics.version_check = lambda:None
 except:...
-version=model_version=os.environ.get("version","v2")
-pretrained_sovits_name=["GPT_SoVITS/pretrained_models/s2G488k.pth", "GPT_SoVITS/pretrained_models/gsv-v2final-pretrained/s2G2333k.pth","GPT_SoVITS/pretrained_models/s2Gv3.pth"]
-pretrained_gpt_name=["GPT_SoVITS/pretrained_models/s1bert25hz-2kh-longer-epoch=68e-step=50232.ckpt","GPT_SoVITS/pretrained_models/gsv-v2final-pretrained/s1bert25hz-5kh-longer-epoch=12-step=369668.ckpt", "GPT_SoVITS/pretrained_models/s1v3.ckpt"]
+# version=model_version=os.environ.get("version","v2")
+version=model_version=os.environ.get("version","v3")
+# pretrained_sovits_name=["GPT_SoVITS/pretrained_models/s2G488k.pth", "GPT_SoVITS/pretrained_models/gsv-v2final-pretrained/s2G2333k.pth","GPT_SoVITS/pretrained_models/s2Gv3.pth"] # org
+# pretrained_sovits_name=[ "GPT_SoVITS/pretrained_models/gsv-v2final-pretrained/s2G2333k.pth"] # For V2
+pretrained_sovits_name=[ "GPT_SoVITS/pretrained_models/s2Gv3.pth"] # For V3
+# pretrained_gpt_name=["GPT_SoVITS/pretrained_models/s1bert25hz-2kh-longer-epoch=68e-step=50232.ckpt","GPT_SoVITS/pretrained_models/gsv-v2final-pretrained/s1bert25hz-5kh-longer-epoch=12-step=369668.ckpt", "GPT_SoVITS/pretrained_models/s1v3.ckpt"] # org
+# pretrained_gpt_name=["GPT_SoVITS/pretrained_models/gsv-v2final-pretrained/s1bert25hz-5kh-longer-epoch=12-step=369668.ckpt"] # For V2
+pretrained_gpt_name=["GPT_SoVITS/pretrained_models/s1v3.ckpt"] # For V3
+
 
 
 _ =[[],[]]
-for i in range(3):
+for i in range(len(pretrained_sovits_name)):
     if os.path.exists(pretrained_gpt_name[i]):_[0].append(pretrained_gpt_name[i])
     if os.path.exists(pretrained_sovits_name[i]):_[-1].append(pretrained_sovits_name[i])
+
+print("___",_)
 pretrained_gpt_name,pretrained_sovits_name = _
+print("pretrained_gpt_name,pretrained_sovits_name ", pretrained_gpt_name,pretrained_sovits_name )
 
 
 if os.path.exists(f"./weight.json"):
@@ -47,8 +56,11 @@ else:
 with open(f"./weight.json", 'r', encoding="utf-8") as file:
     weight_data = file.read()
     weight_data=json.loads(weight_data)
+    print("gpt_path/////",pretrained_gpt_name)
+    print("gpt_path/////version----------------- ",version)
     gpt_path = os.environ.get(
         "gpt_path", weight_data.get('GPT',{}).get(version,pretrained_gpt_name))
+    print("gpt_path___",gpt_path)
     sovits_path = os.environ.get(
         "sovits_path", weight_data.get('SoVITS',{}).get(version,pretrained_sovits_name))
     if isinstance(gpt_path,list):
@@ -223,6 +235,9 @@ def change_sovits_weights(sovits_path,prompt_language=None,text_language=None):
     else:
         version = "v2"
         model_version="v3"
+
+    print("!!! VERSION:",version)
+    print("!!! MODEL_VERSION:",model_version)
 
     dict_language = dict_language_v1 if version =='v1' else dict_language_v2
     if prompt_language is not None and text_language is not None:
