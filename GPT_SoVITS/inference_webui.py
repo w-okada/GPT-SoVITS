@@ -594,6 +594,13 @@ def get_tts_wav(ref_wav_path, prompt_text, prompt_language, text, text_language,
         if not ref_free:
             bert = torch.cat([bert1, bert2], 1)
             all_phoneme_ids = torch.LongTensor(phones1+phones2).to(device).unsqueeze(0)
+            # print("bert1:",bert1.shape) # torch.Size([1024, 73])
+            # print("bert2:",bert2.shape) # torch.Size([1024, 77])
+            # print("bert:",bert.shape) # torch.Size([1024, 150])
+            # print("phones1:",len(phones1), phones1[0]) # 73 222
+            # print("phones2:",len(phones2),phones2[1]) # 77 160
+            # print("all_phoneme_ids:",all_phoneme_ids.shape) # torch.Size([1, 150])
+                                                                           
         else:
             bert = bert2
             all_phoneme_ids = torch.LongTensor(phones2).to(device).unsqueeze(0)
@@ -803,40 +810,40 @@ def process_text(texts):
     return _text
 
 
-def change_choices():
-    SoVITS_names, GPT_names = get_weights_names(GPT_weight_root, SoVITS_weight_root)
-    return {"choices": sorted(SoVITS_names, key=custom_sort_key), "__type__": "update"}, {"choices": sorted(GPT_names, key=custom_sort_key), "__type__": "update"}
+# def change_choices():
+#     SoVITS_names, GPT_names = get_weights_names(GPT_weight_root, SoVITS_weight_root)
+#     return {"choices": sorted(SoVITS_names, key=custom_sort_key), "__type__": "update"}, {"choices": sorted(GPT_names, key=custom_sort_key), "__type__": "update"}
 
 
-SoVITS_weight_root=["SoVITS_weights","SoVITS_weights_v2","SoVITS_weights_v3"]
-GPT_weight_root=["GPT_weights","GPT_weights_v2","GPT_weights_v3"]
-for path in SoVITS_weight_root+GPT_weight_root:
-    os.makedirs(path,exist_ok=True)
+# SoVITS_weight_root=["SoVITS_weights","SoVITS_weights_v2","SoVITS_weights_v3"]
+# GPT_weight_root=["GPT_weights","GPT_weights_v2","GPT_weights_v3"]
+# for path in SoVITS_weight_root+GPT_weight_root:
+#     os.makedirs(path,exist_ok=True)
 
 
-def get_weights_names(GPT_weight_root, SoVITS_weight_root):
-    SoVITS_names = [i for i in pretrained_sovits_name]
-    for path in SoVITS_weight_root:
-        for name in os.listdir(path):
-            if name.endswith(".pth"): SoVITS_names.append("%s/%s" % (path, name))
-    GPT_names = [i for i in pretrained_gpt_name]
-    for path in GPT_weight_root:
-        for name in os.listdir(path):
-            if name.endswith(".ckpt"): GPT_names.append("%s/%s" % (path, name))
-    return SoVITS_names, GPT_names
+# def get_weights_names(GPT_weight_root, SoVITS_weight_root):
+#     SoVITS_names = [i for i in pretrained_sovits_name]
+#     for path in SoVITS_weight_root:
+#         for name in os.listdir(path):
+#             if name.endswith(".pth"): SoVITS_names.append("%s/%s" % (path, name))
+#     GPT_names = [i for i in pretrained_gpt_name]
+#     for path in GPT_weight_root:
+#         for name in os.listdir(path):
+#             if name.endswith(".ckpt"): GPT_names.append("%s/%s" % (path, name))
+#     return SoVITS_names, GPT_names
 
 
-SoVITS_names, GPT_names = get_weights_names(GPT_weight_root, SoVITS_weight_root)
+# SoVITS_names, GPT_names = get_weights_names(GPT_weight_root, SoVITS_weight_root)
 
-def html_center(text, label='p'):
-    return f"""<div style="text-align: center; margin: 100; padding: 50;">
-                <{label} style="margin: 0; padding: 0;">{text}</{label}>
-                </div>"""
+# def html_center(text, label='p'):
+#     return f"""<div style="text-align: center; margin: 100; padding: 50;">
+#                 <{label} style="margin: 0; padding: 0;">{text}</{label}>
+#                 </div>"""
 
-def html_left(text, label='p'):
-    return f"""<div style="text-align: left; margin: 0; padding: 0;">
-                <{label} style="margin: 0; padding: 0;">{text}</{label}>
-                </div>"""
+# def html_left(text, label='p'):
+#     return f"""<div style="text-align: left; margin: 0; padding: 0;">
+#                 <{label} style="margin: 0; padding: 0;">{text}</{label}>
+#                 </div>"""
 
 # WebUIは使用しない。CLIに限定
 # with gr.Blocks(title="GPT-SoVITS WebUI") as app:
