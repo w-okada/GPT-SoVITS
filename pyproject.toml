@@ -25,6 +25,7 @@ dependencies = [
     "onnxruntime-gpu>=1.20.1 ; sys_platform != 'darwin'",
     "opencc==1.1.1 ; sys_platform == 'linux'",
     "opencc>=1.1.1 ; sys_platform != 'linux'",
+    "peft>=0.14.0",
     "psutil>=7.0.0",
     "pyopenjtalk>=0.3.4",
     "pypinyin>=0.53.0",
